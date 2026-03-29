@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mehrab's Manager Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #4F46E5; --primary-light: #818CF8; --success: #10B981; --danger: #EF4444; --dark: #1F2937; --bg: #F3F4F6; --card: #FFFFFF; --text: #111827; --text-muted: #6B7280; --border: #E5E7EB; }
+        [data-theme="dark"] { --bg: #111827; --card: #1F2937; --text: #F9FAFB; --text-muted: #9CA3AF; --border: #374151; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; transition: 0.3s; }
+        
+        #pookie-toast-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; width: 90%; max-width: 350px; }
+        .p-toast { background: var(--card); padding: 12px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid; display: flex; align-items: center; gap: 10px; animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .p-toast.error { border-color: #FFB6C1; background: #FFF0F5; color: #D6336C; }
+        .p-toast.success { border-color: #A7F3D0; background: #ECFDF5; color: #059669; }
+        @keyframes bounceIn { 0% { transform: translateY(-40px) scale(0.8); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+        @keyframes fadeOutUp { to { transform: translateY(-30px); opacity: 0; } }
+
+        .header { padding: 20px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .user-info h2 { margin: 0; font-size: 20px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .user-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+        .theme-btn { border: 1px solid var(--border); background: var(--bg); width: 36px; height: 36px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text); transition: 0.2s; }
+        
+        .hero { padding: 20px 20px 0; animation: slideDown 0.5s ease; }
+        .bal-card { background: linear-gradient(135deg, var(--primary), #6366F1); color: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4); position: relative; overflow: hidden; text-align: center; }
+        .bal-card::before { content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .label { font-size: 12px; font-weight: 500; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px; }
+        .amount { font-size: 38px; font-weight: 800; margin: 5px 0 15px; letter-spacing: -1px; }
+        .stats-grid { display: flex; justify-content: center; gap: 15px; }
+        .stat-item { background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(5px); }
+
+        .content { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px; scroll-behavior: smooth; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.4s ease; }
+        .card { background: var(--card); padding: 16px; border-radius: 20px; margin-bottom: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition: 0.3s; }
+        
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        input, select, textarea { width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 15px; outline: none; transition: 0.2s; margin-bottom: 10px; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: var(--card); }
+        .row { display: flex; gap: 10px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 14px; font-weight: 600; font-size: 15px; cursor: pointer; color: white; transition: transform 0.1s; margin-top: 5px; }
+        .btn:active { transform: scale(0.97); }
+        .btn-exp { background: var(--danger); } .btn-inc { background: var(--success); } .btn-blue { background: var(--primary); }
+        
+        .toggle-container { background: var(--bg); padding: 4px; border-radius: 14px; display: flex; margin-bottom: 15px; }
+        .toggle-btn { flex: 1; padding: 10px; text-align: center; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.2s; border: none; background: none; }
+        .toggle-btn.active { background: var(--card); color: var(--text); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        .scroll-box { max-height: 250px; overflow-y: auto; padding-right: 5px; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); animation: slideInLeft 0.3s ease forwards; opacity: 0; transform: translateX(-10px); }
+        .list-item:last-child { border-bottom: none; }
+        .icon-box { width: 36px; height: 36px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 12px; color: var(--text); flex-shrink: 0; }
+        .item-meta { flex: 1; }
+        .item-meta h4 { margin: 0; font-size: 14px; font-weight: 600; }
+        .item-meta p { margin: 2px 0 0; font-size: 11px; color: var(--text-muted); }
+        .item-amt { font-size: 14px; font-weight: 700; display:flex; align-items:center; gap:4px; flex-shrink: 0; }
+        .text-inc { color: var(--success); } .text-exp { color: var(--danger); }
+
+        .chk-circle { width: 24px; height: 24px; border: 2px solid var(--text-muted); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: 14px; transition: 0.3s; flex-shrink: 0; }
+        .chk-circle.done { background: var(--success); border-color: var(--success); }
+        .chk-circle.done::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
+        
+        /* 🚨 THE MAGIC FIX FOR TOUCH BUG: FAB Container pointer-events */
+        .del-btn { background: transparent; border: none; color: var(--danger); font-size: 26px; width: 36px; height: 36px; padding: 0; margin-left: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; touch-action: manipulation; opacity: 0.6; border-radius: 50%; transition: 0.2s; position: relative; z-index: 50; }
+        .del-btn:active { background: rgba(239, 68, 68, 0.15); opacity: 1; transform: scale(0.9); }
+
+        /* pointer-events: none lets clicks pass through the invisible box to the delete buttons! */
+        .fab-container { position: fixed; bottom: 85px; right: 20px; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 15px; pointer-events: none; }
+        .fab-menu { display: flex; flex-direction: column; gap: 15px; opacity: 0; visibility: hidden; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
+        .fab-menu.active { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
+        
+        .nav-item { background: var(--card); border: 1px solid var(--border); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--text-muted); cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); pointer-events: auto; }
+        .nav-item.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4); }
+        .fab-main { background: var(--primary); color: white; width: 55px; height: 55px; border-radius: 50%; border: none; font-size: 26px; cursor: pointer; box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4); transition: transform 0.3s; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
+        .fab-main.active { transform: rotate(45deg); background: var(--danger); box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4); }
+        
+        .cal-icon { display: inline-block; width: 22px; height: 22px; background: white; border-radius: 4px; text-align: center; line-height: 1; font-family: sans-serif; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .cal-top { background: var(--danger); color: white; font-size: 6px; padding: 2px 0; font-weight: bold; }
+        .cal-bot { color: #333; font-size: 9px; font-weight: bold; padding-top: 2px; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 24px; width: 90%; max-width: 380px; animation: popUp 0.2s ease; max-height: 90vh; display: flex; flex-direction: column; }
+        
+        #dynamicPieChart { width: 160px; height: 160px; border-radius: 50%; margin: 0 auto 20px; transition: background 0.5s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body data-theme="light">
+    <div id="pookie-toast-box"></div>
+    <header class="header">
+        <div class="user-info"><p>Welcome back,</p><h2>Mehrab Hossain</h2></div>
+        <div style="display: flex; gap: 8px;">
+            <button class="theme-btn" onclick="openSettings()">⚙️</button>
+            <button class="theme-btn" onclick="toggleTheme()" id="themeIcon">🌙</button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="bal-card">
+            <div class="label">Current Wallet</div>
+            <div class="month-progress" style="margin-top: 8px; margin-bottom: 8px; text-align: center;">
+                <span style="font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.8);" id="monthSpentGoalLabel">Income: ৳0 | 0% Spent</span>
+                <div style="display: flex; align-items: center; justify-content: center; margin-top: 5px;">
+                    <div style="width: 120px; height: 8px; background-color: rgba(255, 255, 255, 0.2); border-radius: 10px; position: relative; overflow: hidden;">
+                        <div id="monthProgressFill" style="position: absolute; top: 0; left: 0; width: 0%; height: 100%; background-color: #fff; border-radius: 10px; transition: width 0.3s, background-color 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="amount" id="dispBal">৳0</div>
+            <div class="stats-grid">
+                <div class="stat-item">📉 Exp: <span id="dispExp">0</span></div>
+                <div class="stat-item">📈 Inc: <span id="dispInc">0</span></div>
+            </div>
+        </div>
+    </section>
+
+    <main class="content">
+        <div id="p-wallet" class="page active">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Manage Wallet</span>
+                    <span onclick="openMenuPopup()" style="cursor: pointer; font-size: 18px; color: var(--text-muted); padding: 0 5px;">&vellip;</span>
+                </div>
+                <div class="toggle-container">
+                    <button class="toggle-btn active" id="tabExp" onclick="setMode('exp')">Expense</button>
+                    <button class="toggle-btn" id="tabInc" onclick="setMode('inc')">Income</button>
+                </div>
+                <select id="catSelect"></select>
+                
+                <div class="row">
+                    <input type="number" id="inpAmt" placeholder="Amount" style="flex:1;">
+                    <label for="receiptUpload" class="theme-btn" style="border-radius:14px; width:48px; height:48px; cursor:pointer; flex-shrink:0;" title="Attach Photo">📸</label>
+                    <input type="file" id="receiptUpload" style="display:none;" accept="image/*" onchange="processImage(this)">
+                    <button class="theme-btn" style="border-radius:14px; width:48px; height:48px; cursor:pointer; flex-shrink:0;" onclick="startVoiceNote()" title="Voice Note">🎤</button>
+                </div>
+                <input type="text" id="inpNote" placeholder="Note (Optional)" style="margin-top:10px;">
+                
+                <div id="receiptPreview" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 10px; background: rgba(16, 185, 129, 0.1); padding: 8px 12px; border-radius: 10px; font-size: 12px;">
+                    <span style="color: var(--success); font-weight: bold;">✓ Photo Attached</span>
+                    <span onclick="clearReceipt()" style="color: var(--danger); font-weight: bold; cursor: pointer;">[Remove]</span>
+                </div>
+
+                <button class="btn btn-exp" id="mainBtn" onclick="addTx()">Add Expense</button>
+            </div>
+            <div class="card" style="padding-bottom: 5px;">
+                <div class="section-header">
+                    <span>Recent History <small style="color:var(--primary); font-size:10px; text-transform:none;">(This Month)</small></span>
+                </div>
+                <div class="scroll-box" id="walletList"></div>
+            </div>
+        </div>
+
+        <div id="p-mess" class="page">
+            <div class="card" style="background: #1F2937; color: white; border:none;">
+                <div class="section-header" style="color:rgba(255,255,255,0.7); margin-bottom:15px;">Mess Overview</div>
+                <div style="display:flex; justify-content:space-between; text-align:center;">
+                    <div><small style="opacity:0.6;">Total Meals</small><div style="font-size:20px; font-weight:700;" id="mQty">0</div></div>
+                    <div><small style="opacity:0.6;">Cost</small><div style="font-size:20px; font-weight:700; color:#FCA5A5;" id="mCost">৳0</div></div>
+                    <div><small style="opacity:0.6;">Deposited</small><div style="font-size:20px; font-weight:700; color:#6EE7B7;" id="mDep">৳0</div></div>
+                </div>
+                <div style="text-align:center; margin-top:15px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); font-size:13px;">Current Status: <span id="mStatus" style="font-weight:700;">--</span></div>
+            </div>
+            <div class="card">
+                <div class="section-header">🍽️ Add Meal <span style="font-size:10px; color:var(--success);">(No Deduction from Wallet)</span></div>
+                <div class="row"><input type="number" id="mealQ" placeholder="Qty"><input type="number" id="mealR" placeholder="Rate"></div>
+                <button class="btn btn-blue" onclick="addMeal()">Add Meal Entry</button>
+            </div>
+            <div class="card">
+                <div class="section-header">💰 Manager Deposit <span style="font-size:10px; color:var(--danger);">(Deducts from Wallet)</span></div>
+                <input type="number" id="depAmt" placeholder="Amount">
+                <button class="btn btn-inc" onclick="addDeposit()">Add Deposit Record</button>
+            </div>
+            <div class="card"><div class="section-header">Mess History</div><div class="scroll-box" id="messLog"></div></div>
+        </div>
+
+        <div id="p-tasks" class="page">
+            <h2 style="margin-top:0;">Tasks & Habits</h2>
+            <div class="card" style="margin:0 0 16px 0; padding:15px; text-align:center;" onclick="go('tasks')">
+                <div style="font-size:13px; font-weight:700;">Pending Tasks: <span id="dashTasks" style="color:var(--danger); font-size: 16px;">0</span></div>
+            </div>
+
+            <div class="card">
+                <div class="section-header">To-Do List</div>
+                <input type="text" id="taskInp" placeholder="New task..." style="margin-bottom:10px;">
+                <button class="btn btn-blue" style="margin-top:0; margin-bottom:15px;" onclick="addTask()">Add Task</button>
+                <div class="scroll-box" id="taskList"></div>
+            </div>
+            <div class="card">
+                <div class="section-header">Daily Habits</div>
+                <input type="text" id="habitInp" placeholder="Drink 2L Water..." style="margin-bottom:10px;">
+                <button class="btn btn-inc" style="margin-top:0; margin-bottom:15px;" onclick="addHabit()">Add Habit</button>
+                <div class="scroll-box" id="habitList"></div>
+            </div>
+        </div>
+
+        <div id="p-report" class="page">
+            <div class="card">
+                <div class="section-header">📊 Yearly Report (2026)</div>
+                <div class="scroll-box" id="reportList" style="max-height: 400px;"></div>
+            </div>
+        </div>
+    </main>
+
+    <div class="fab-container">
+        <div class="fab-menu" id="fabMenu">
+            <button class="nav-item" id="n-report" onclick="go('report')"><div class="cal-icon"><div class="cal-top">JUL</div><div class="cal-bot">36</div></div></button>
+            <button class="nav-item" id="n-tasks" onclick="go('tasks')">📝</button>
+            <button class="nav-item" id="n-mess" onclick="go('mess')">🥘</button>
+            <button class="nav-item active" id="n-wallet" onclick="go('wallet')">🏠</button>
+        </div>
+        <button class="fab-main" id="fabBtn" onclick="toggleFab()">⊞</button>
+    </div>
+        <div class="modal" id="settingsModal">
+        <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin:0;">Settings</h3><span onclick="closeSettings()" style="cursor: pointer; font-size: 30px; padding: 5px; line-height: 1;">&times;</span>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Customize Categories</label>
+                <div class="toggle-container" style="margin-top: 8px;">
+                    <button class="toggle-btn active" id="stSetModeExp" onclick="setSetCatMode('exp')">Expense</button>
+                    <button class="toggle-btn" id="stSetModeInc" onclick="setSetCatMode('inc')">Income</button>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 5px;">
+                    <input type="text" id="newCatName" placeholder="New Category Name" style="margin: 0; padding: 12px; font-size: 13px;">
+                    <button onclick="addNewCat()" style="padding: 0 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 13px; font-weight: 600;">Add</button>
+                </div>
+                <div id="catListDisplay" class="scroll-box" style="max-height: 120px; margin-top: 10px; border: 1px solid var(--border); border-radius: 12px; padding: 5px;"></div>
+            </div>
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 15px 0;">
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <button onclick="exportData()" class="btn btn-inc" style="margin:0; font-size:13px; padding:12px;">💾 Save Backup</button>
+                <button onclick="document.getElementById('importFile').click()" class="btn btn-blue" style="margin:0; font-size:13px; padding:12px;">📂 Paste Backup</button>
+            </div>
+            <button onclick="resetData()" class="btn btn-exp" style="padding: 12px; font-size: 13px;">RESET ALL DATA</button>
+        </div>
+    </div>
+
+    <div class="modal" id="menuModal" style="background: transparent;">
+        <div onclick="closeModal()" style="position: absolute; inset: 0;"></div>
+        <div style="position: absolute; top: 120px; left: 20px; width: 200px; background: var(--card); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid var(--border); overflow: hidden; z-index: 201;">
+            <div onclick="openModal('chart'); renderChartList();" style="padding: 15px; font-size: 14px; font-weight: 600; cursor: pointer;">📊 This Month's Chart</div>
+            <div onclick="exportData()" style="padding: 15px; font-size: 14px; font-weight: 600; cursor: pointer; border-top: 1px solid var(--border);">📥 Download Backup</div>
+            <div onclick="document.getElementById('importFile').click()" style="padding: 15px; font-size: 14px; font-weight: 600; cursor: pointer; border-top: 1px solid var(--border);">📤 Import Backup</div>
+            <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+        </div>
+    </div>
+
+    <div class="modal" id="chartModal">
+        <div class="modal-content" style="max-height: 85vh; padding-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink:0;">
+                <h3 id="chartTitle" style="margin:0;">Spending Breakdown</h3><span onclick="closeModal()" style="cursor: pointer; font-size: 30px; padding: 5px; line-height: 1;">&times;</span>
+            </div>
+            <div id="dynamicPieChart" style="flex-shrink:0;"></div>
+            <div class="scroll-box" id="chartBreakdownList" style="flex:1; overflow-y:auto; padding-right:5px; margin-bottom: 10px;"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="detailsModal">
+        <div class="modal-content" style="padding: 20px; max-height: 85vh;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-shrink: 0;">
+                <div style="display:flex; flex-direction:column;">
+                    <h3 id="detailsTitle" style="margin:0; color:var(--primary);">Details</h3>
+                    <div id="detailsChartBtn" style="font-size:12px; font-weight:bold; color:var(--primary-light); cursor:pointer; margin-top:5px; padding:4px 0;">📊 View Month Chart</div>
+                </div>
+                <button onclick="closeModal()" style="background:none; border:none; font-size:30px; cursor:pointer; color:var(--text-muted); padding: 5px; line-height: 1;">&times;</button>
+            </div>
+            <div id="detailsList" style="flex:1; overflow:hidden; display:flex; flex-direction:column;"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="imageModal">
+        <div class="modal-content" style="padding: 10px; background: transparent; border: none; box-shadow: none; max-width: 100%;">
+            <div style="text-align: right; margin-bottom: 10px;">
+                <span onclick="closeModal()" style="cursor: pointer; font-size: 34px; color: white; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 50%; display:inline-block;">&times;</span>
+            </div>
+            <img id="viewerImg" src="" style="width: 100%; border-radius: 16px; max-height: 70vh; object-fit: contain;">
+        </div>
+    </div>
+        <script>
+    const DB = {
+        mem: {},
+        get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return this.mem[k]; } },
+        set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){ this.mem[k] = v; } },
+        clear() { try { localStorage.clear(); } catch(e){ this.mem = {}; } }
+    };
+
+    let data = DB.get('data') || [];
+    let customCats = DB.get('custom_cats') || null;
+    let tasks = DB.get('tasks') || [];
+    let habits = DB.get('habits') || [];
+    let mode = 'exp'; let setCatMode = 'exp'; let tempImage = null;
+
+    const expCats = ["খাবার খরচ (Snacks)", "হোস্টেল ফি", "যাতায়াত (বাড়ি)", "যাতায়াত (লোকাল)", "মোবাইল/ইন্টারনেট", "অন্যান্য"];
+    const incCats = ["বাড়ি থেকে পাঠানো", "ভাই/বোন থেকে প্রাপ্ত", "টিউশন / ইনকাম", "ধার নেওয়া", "পূর্বের জের"];
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    function safeHTML(id, html) { const el = document.getElementById(id); if(el) el.innerHTML = html; }
+    function safeText(id, text) { const el = document.getElementById(id); if(el) el.innerText = text; }
+
+    function pookie(msg, type='success') {
+        const box = document.getElementById('pookie-toast-box');
+        if(!box) return;
+        const t = document.createElement('div');
+        t.className = `p-toast ${type}`;
+        t.innerHTML = `<span style="font-size:18px;">${type === 'error' ? '🥺' : '✨'}</span> <span>${msg}</span>`;
+        box.appendChild(t);
+        setTimeout(() => { t.style.animation = 'fadeOutUp 0.4s ease forwards'; setTimeout(() => t.remove(), 400); }, 3000);
+    }
+
+    init();
+    function init() {
+        const t = DB.get('theme') || 'light'; document.body.setAttribute('data-theme', t);
+        safeText('themeIcon', t==='dark'?'☀️':'🌙'); setMode('exp'); render();
+    }
+
+    function exportData() {
+        const blob = new Blob([JSON.stringify({ data, custom_cats: customCats, tasks, habits })], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob); const a = document.createElement('a');
+        a.style.display = 'none'; a.href = url; a.download = 'Mehrab_Manager_Backup.json';
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 100);
+        closeModal(); pookie("হিসাব প্যাক করা হয়েছে! 🎒", "success");
+    }
+
+    function importData(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imp = JSON.parse(e.target.result);
+                if (imp.data) DB.set('data', imp.data); if (imp.custom_cats) DB.set('custom_cats', imp.custom_cats);
+                if (imp.tasks) DB.set('tasks', imp.tasks); if (imp.habits) DB.set('habits', imp.habits);
+                alert("সব হিসাব ফিরে এসেছে! 🎉"); location.reload();
+            } catch (err) { pookie("ফাইল পড়তে পারছি না! 😭", "error"); }
+        };
+        reader.readAsText(file);
+    }
+
+    function processImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas'); const scale = img.width > 400 ? 400 / img.width : 1;
+                    canvas.width = img.width * scale; canvas.height = img.height * scale;
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    tempImage = canvas.toDataURL('image/jpeg', 0.6);
+                    document.getElementById('receiptPreview').style.display = 'flex';
+                }; img.src = e.target.result;
+            }; reader.readAsDataURL(input.files[0]);
+        }
+    }
+    function clearReceipt() { tempImage = null; document.getElementById('receiptUpload').value=''; document.getElementById('receiptPreview').style.display='none'; }
+    function viewImage(src) { document.getElementById('viewerImg').src=src; document.getElementById('imageModal').style.display='flex'; }
+    function startVoiceNote() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return pookie("ভয়েস সাপোর্ট করে না! 🥺", "error");
+        const sr = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); sr.lang = 'bn-BD';
+        sr.onstart = () => { document.getElementById('inpNote').placeholder = "Listening..."; };
+        sr.onresult = (e) => { document.getElementById('inpNote').value = e.results[0][0].transcript; };
+        sr.onend = () => { document.getElementById('inpNote').placeholder = "Note (Optional)"; }; sr.start();
+    }
+
+    function setMode(m) {
+        mode = m; const sel = document.getElementById('catSelect'); const btn = document.getElementById('mainBtn');
+        document.getElementById('tabExp').className = m === 'exp' ? 'toggle-btn active' : 'toggle-btn';
+        document.getElementById('tabInc').className = m === 'inc' ? 'toggle-btn active' : 'toggle-btn';
+        sel.innerHTML = ''; getCats(m).forEach(c => { sel.innerHTML += `<option>${c}</option>`; });
+        btn.className = m === 'exp' ? 'btn btn-exp' : 'btn btn-inc'; btn.innerText = m === 'exp' ? 'Add Expense' : 'Add Income';
+    }
+    function getCats(type) { if(customCats && customCats[type]) return customCats[type]; return type === 'exp' ? expCats : incCats; }
+
+    function addTx() {
+        const amt = parseFloat(document.getElementById('inpAmt').value);
+        if(!amt) return pookie("টাকা না দিলে হিসাব রাখবো কী করে? 🥺", "error");
+        pushData(mode, document.getElementById('catSelect').value, amt, document.getElementById('inpNote').value, null, 0, tempImage);
+        document.getElementById('inpAmt').value = ''; document.getElementById('inpNote').value = ''; clearReceipt(); render();
+        pookie(mode === 'exp' ? "হিসাব পাক্কা! 💸" : "পকেটে টাকা আসছে! 🤑✨", "success");
+    }
+
+    function addDeposit() {
+        const a = parseFloat(document.getElementById('depAmt').value); if(!a) return pookie("ডিপোজিটের ঘরে হাওয়া! 💸🥺", "error");
+        pushData('exp', 'Mess Deposit', a, 'Paid to Manager', 'deposit', 0, null); document.getElementById('depAmt').value = ''; render(); pookie("জমা ডান! 💰", "success");
+    }
+
+    function addMeal() {
+        const q = parseFloat(document.getElementById('mealQ').value), r = parseFloat(document.getElementById('mealR').value);
+        if(!q || !r) return pookie("কয়টা মিল আর কত টাকা? 🍱", "error");
+        pushData('none', 'Mess Meal', q*r, `${q} Meal @ ${r}`, 'meal', q, null); document.getElementById('mealQ').value = ''; document.getElementById('mealR').value = ''; render(); pookie("খাবার দাবার সেই! 🍛", "success");
+    }
+    
+    function pushData(type, cat, amt, note, tag=null, qty=0, img=null) {
+        data.push({ id: Date.now(), type, cat, amt, note, tag, qty, img, date: new Date().toLocaleDateString('en-US'), month: new Date().toLocaleString('en-US', { month: 'long' }) });
+        DB.set('data', data);
+    }
+    function deleteTx(id) { if(confirm("সত্যি ডিলিট করবে? 🥺")) { data = data.filter(i => i.id !== id); DB.set('data', data); render(); pookie("মুছে দিলাম! 💨", "success"); } }
+    function resetData() { if(confirm("পাক্কা? সব হিস্ট্রি নাই করে দেবো? 🥺")) { DB.clear(); data=[]; customCats=null; tasks=[]; habits=[]; render(); closeModal(); } }
+
+    function addTask() { const v = document.getElementById('taskInp'); if(v && v.value.trim() !== '') { tasks.push({id: Date.now(), text: v.value.trim(), done: false}); DB.set('tasks', tasks); v.value=''; render(); } }
+    function toggleTask(id) { tasks = tasks.map(t => t.id === id ? {...t, done: !t.done} : t); DB.set('tasks', tasks); render(); }
+    function delTask(id) { tasks = tasks.filter(t => t.id !== id); DB.set('tasks', tasks); render(); }
+
+    function addHabit() { const v = document.getElementById('habitInp'); if(v && v.value.trim() !== '') { habits.push({id: Date.now(), text: v.value.trim(), done: false}); DB.set('habits', habits); v.value=''; render(); } }
+    function toggleHabit(id) { habits = habits.map(h => h.id === id ? {...h, done: !h.done} : h); DB.set('habits', habits); render(); }
+    function delHabit(id) { habits = habits.filter(h => h.id !== id); DB.set('habits', habits); render(); }
+
+    function render() {
+        let lBal = 0, cInc = 0, cExp = 0, mQ = 0, mC = 0, mD = 0; let autoRep = {}, autoInc = {};
+        const curM = new Date().toLocaleString('en-US', { month: 'long' });
+        let wHtml = '', mHtml = '', rHtml = '', tHtml = '', hHtml = ''; let tP = 0;
+
+        data.slice().reverse().forEach(i => {
+            if(i.type === 'inc') { lBal += i.amt; autoInc[i.month] = (autoInc[i.month] || 0) + i.amt; }
+            if(i.type === 'exp') { lBal -= i.amt; autoRep[i.month] = (autoRep[i.month] || 0) + i.amt; }
+            if(i.tag === 'meal') { mC += i.amt; mQ += i.qty; } if(i.tag === 'deposit') { mD += i.amt; }
+            
+            if(i.month === curM) {
+                if(i.type === 'inc') cInc += i.amt; if(i.type === 'exp') cExp += i.amt;
+                if(i.type !== 'none') {
+                    let imgIcon = i.img ? `<span onclick="viewImage('${i.img}')" style="cursor:pointer; font-size:16px;">📸</span>` : '';
+                    wHtml += `<div class="list-item"><div style="display:flex; align-items:center; flex:1; overflow:hidden;"><div class="icon-box">${i.type==='inc'?'💰':(i.tag?'🥘':'💸')}</div><div class="item-meta"><h4 style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${i.cat}</h4><p>${i.date} ${i.note?'• '+i.note:''}</p></div></div><div class="item-amt ${i.type==='inc'?'text-inc':'text-exp'}">${imgIcon} ${i.type==='inc'?'+':'-'}৳${i.amt}<button class="del-btn" onclick="event.stopPropagation(); deleteTx(${i.id})">&times;</button></div></div>`;
+                }
+            }
+            if(i.tag) { mHtml += `<div class="list-item"><div style="display:flex; align-items:center;"><div class="icon-box">${i.tag==='meal'?'🍛':'💵'}</div><div class="item-meta"><h4>${i.cat}</h4><p>${i.date}</p></div></div><div class="item-amt" style="color:${i.tag==='meal'?'var(--danger)':'var(--success)'}">৳${i.amt}</div></div>`; }
+        });
+
+        tasks.forEach(t => { if(!t.done) tP++; tHtml += `<div class="list-item"><div style="display:flex; align-items:center; flex:1; cursor:pointer;" onclick="toggleTask(${t.id})"><div class="chk-circle ${t.done?'done':''}">${t.done?'✓':''}</div><span style="font-size:14px; font-weight:600; ${t.done?'text-decoration:line-through; opacity:0.5;':''}">${t.text}</span></div><button class="del-btn" onclick="event.stopPropagation(); delTask(${t.id})">&times;</button></div>`; });
+        habits.forEach(h => { hHtml += `<div class="list-item"><div style="display:flex; align-items:center; flex:1; cursor:pointer;" onclick="toggleHabit(${h.id})"><div class="chk-circle ${h.done?'done':''}">${h.done?'✓':''}</div><span style="font-size:14px; font-weight:600; ${h.done?'text-decoration:line-through; opacity:0.5;':''}">${h.text}</span></div><button class="del-btn" onclick="event.stopPropagation(); delHabit(${h.id})">&times;</button></div>`; });
+
+        months.forEach(m => {
+            rHtml += `<div class="list-item" onclick="viewDetails('${m}')" style="cursor:pointer; display: flex; flex-direction: column; align-items: stretch; gap: 8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;"><div class="item-meta"><h4>${m}</h4><p style="font-size:10px; color:var(--text-muted);">Click to view details</p></div></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background: var(--bg); padding: 8px 12px; border-radius: 8px;">
+                    <span style="font-size:13px; font-weight:700; color:var(--success);">Inc: ৳${autoInc[m]||0}</span>
+                    <span style="font-size:13px; font-weight:700; color:var(--danger);">Exp: ৳${autoRep[m]||0}</span>
+                </div></div>`;
+        });
+
+        safeHTML('walletList', wHtml || `<div style="text-align:center; padding:20px; font-size:12px; color:var(--text-muted);">No transactions this month.</div>`);
+        safeHTML('messLog', mHtml); safeHTML('taskList', tHtml || ''); safeHTML('habitList', hHtml || ''); safeHTML('reportList', rHtml);
+        safeText('dispBal', '৳' + lBal); safeText('dispInc', '৳' + cInc); safeText('dispExp', '৳' + cExp);
+        safeText('dashTasks', tP); safeText('mQty', mQ); safeText('mCost', '৳' + mC); safeText('mDep', '৳' + mD);
+        safeHTML('mStatus', (mD - mC) < 0 ? `<span style="color:#FCA5A5">Due: ৳${Math.abs(mD - mC)}</span>` : `<span style="color:#6EE7B7">Surplus: ৳${mD - mC}</span>`);
+        
+        let pct = cInc > 0 ? Math.min(100, (cExp / cInc) * 100).toFixed(0) : (cExp > 0 ? 100 : 0);
+        safeText('monthSpentGoalLabel', `Income: ৳${cInc.toLocaleString()} | ${pct}% Spent`);
+        const pf = document.getElementById('monthProgressFill');
+        if(pf) { pf.style.width = pct + '%'; pf.style.backgroundColor = pct >= 80 ? 'var(--danger)' : '#fff'; pf.style.boxShadow = pct >= 80 ? '0 0 10px var(--danger)' : 'none'; }
+    }
+
+    function toggleFab() { document.getElementById('fabMenu').classList.toggle('active'); document.getElementById('fabBtn').classList.toggle('active'); }
+    function go(p) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); document.getElementById('p-'+p).classList.add('active'); document.getElementById('n-'+p).classList.add('active'); toggleFab(); }
+    function toggleTheme() { const b = document.body; const isD = b.getAttribute('data-theme') === 'dark'; b.setAttribute('data-theme', isD ? 'light' : 'dark'); safeText('themeIcon', isD ? '🌙' : '☀️'); DB.set('theme', isD ? 'light' : 'dark'); }
+    function openModal(id) { closeModal(); document.getElementById(id + 'Modal').style.display = 'flex'; }
+    function closeModal() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+    function openMenuPopup() { document.getElementById('menuModal').style.display = 'flex'; }
+    function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; renderCatList(); }
+    function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+    
+    function setSetCatMode(m) { setCatMode = m; document.getElementById('stSetModeExp').className = m === 'exp' ? 'toggle-btn active' : 'toggle-btn'; document.getElementById('stSetModeInc').className = m === 'inc' ? 'toggle-btn active' : 'toggle-btn'; renderCatList(); }
+    function renderCatList() { const box = document.getElementById('catListDisplay'); box.innerHTML = ''; getCats(setCatMode).forEach(c => { box.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px; background:var(--bg); margin-bottom:5px; border-radius:8px;"><span style="font-size:13px; font-weight:600;">${c}</span><span onclick="delCat('${c}')" style="color:var(--danger); cursor:pointer; font-size:24px; padding: 5px 15px; line-height: 1;">&times;</span></div>`; }); }
+    function addNewCat() { const n = document.getElementById('newCatName'); if(!n || !n.value) return; if(!customCats) customCats = {exp: [...expCats], inc: [...incCats]}; if(customCats[setCatMode].includes(n.value)) return pookie('Exists!', 'error'); customCats[setCatMode].push(n.value); DB.set('custom_cats', customCats); n.value = ''; renderCatList(); setMode(mode); }
+    function delCat(n) { if(!customCats) customCats = {exp: [...expCats], inc: [...incCats]}; customCats[setCatMode] = customCats[setCatMode].filter(c => c !== n); DB.set('custom_cats', customCats); renderCatList(); setMode(mode); }
+    
+    function viewDetails(month) {
+        safeText('detailsTitle', month + ' Overview');
+        document.getElementById('detailsChartBtn').onclick = function() { closeModal(); openModal('chart'); renderChartList(month); };
+        
+        let incHtml = '', expHtml = '', hasData = false;
+        data.slice().reverse().forEach(i => {
+            if(i.month === month && i.type !== 'none') {
+                hasData = true;
+                let item = `<div style="padding:10px 0; border-bottom:1px solid var(--border); font-size:12px;"><div style="font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${i.cat}</div><div style="color:var(--text-muted); font-size:10px; margin-top:2px;">${i.date}</div><div style="margin-top:6px; font-weight:700; font-size:13px; color:${i.type==='inc'?'var(--success)':'var(--danger)'};">${i.type==='inc'?'+':'-'}৳${i.amt}</div></div>`;
+                if(i.type === 'inc') incHtml += item; else expHtml += item;
+            }
+        });
+
+        if(!hasData) safeHTML('detailsList', '<div style="text-align:center; padding:20px; font-size:12px; color:var(--text-muted);">No data.</div>');
+        else safeHTML('detailsList', `<div style="display:flex; gap:10px; flex:1; min-height:0;"><div style="flex:1; border-right:1px solid var(--border); padding-right:5px; overflow-y:auto;" class="scroll-box"><div style="position:sticky; top:0; background:var(--card); font-weight:800; color:var(--success); text-align:center; padding-bottom:8px; border-bottom:2px solid var(--success); margin-bottom:5px; z-index:5;">Income</div>${incHtml || '-'}</div><div style="flex:1; padding-left:5px; overflow-y:auto;" class="scroll-box"><div style="position:sticky; top:0; background:var(--card); font-weight:800; color:var(--danger); text-align:center; padding-bottom:8px; border-bottom:2px solid var(--danger); margin-bottom:5px; z-index:5;">Expense</div>${expHtml || '-'}</div></div>`);
+        openModal('details');
+    }
+
+    function renderChartList(monthTitle) { 
+        let month = monthTitle || new Date().toLocaleString('en-US', { month: 'long' });
+        safeText('chartTitle', month + ' Chart');
+        let html = '', brk = {}, total = 0, colors = ['#F1A340', '#ED6C2B', '#EA514B', '#149F7D', '#4F46E5', '#10B981'];
+        data.forEach(i => { if(i.type === 'exp' && i.month === month) { brk[i.cat] = (brk[i.cat] || 0) + i.amt; total += i.amt; } }); 
+        
+        let idx = 0, conicStr = '', startA = 0;
+        for(let c in brk) { 
+            let pct = (brk[c]/total) * 100; let endA = startA + pct;
+            conicStr += `${colors[idx%colors.length]} ${startA}% ${endA}%, `; startA = endA;
+            html += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);"><div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:50%; background:${colors[idx%colors.length]};"></span><span style="font-size:13px; font-weight:600;">${c}</span></div><span style="font-weight:700; font-size:13px;">৳${brk[c].toLocaleString()}</span></div>`; 
+            idx++;
+        } 
+        
+        const pie = document.getElementById('dynamicPieChart');
+        if(total > 0) {
+            pie.style.background = `conic-gradient(${conicStr.slice(0, -2)})`;
+            safeHTML('chartBreakdownList', html);
+        } else {
+            pie.style.background = 'var(--border)';
+            safeHTML('chartBreakdownList', `<div style="text-align:center; padding:10px; color:var(--text-muted); font-size:12px;">No expenses in ${month}.</div>`);
+        }
+    }
+    </script>
+</body>
+</html>
