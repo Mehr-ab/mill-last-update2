@@ -62,11 +62,9 @@
         .chk-circle.done { background: var(--success); border-color: var(--success); }
         .chk-circle.done::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
         
-        /* 🚨 THE MAGIC FIX FOR TOUCH BUG: FAB Container pointer-events */
         .del-btn { background: transparent; border: none; color: var(--danger); font-size: 26px; width: 36px; height: 36px; padding: 0; margin-left: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; touch-action: manipulation; opacity: 0.6; border-radius: 50%; transition: 0.2s; position: relative; z-index: 50; }
         .del-btn:active { background: rgba(239, 68, 68, 0.15); opacity: 1; transform: scale(0.9); }
 
-        /* pointer-events: none lets clicks pass through the invisible box to the delete buttons! */
         .fab-container { position: fixed; bottom: 85px; right: 20px; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 15px; pointer-events: none; }
         .fab-menu { display: flex; flex-direction: column; gap: 15px; opacity: 0; visibility: hidden; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
         .fab-menu.active { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
@@ -83,7 +81,7 @@
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: var(--card); padding: 25px; border-radius: 24px; width: 90%; max-width: 380px; animation: popUp 0.2s ease; max-height: 90vh; display: flex; flex-direction: column; }
         
-        #dynamicPieChart { width: 160px; height: 160px; border-radius: 50%; margin: 0 auto 20px; transition: background 0.5s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        #dynamicPieChart { width: 160px; height: 160px; margin: 0 auto 20px; transition: background 0.5s ease; }
 
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -105,7 +103,7 @@
         <div class="bal-card">
             <div class="label">Current Wallet</div>
             <div class="month-progress" style="margin-top: 8px; margin-bottom: 8px; text-align: center;">
-                <span style="font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.8);" id="monthSpentGoalLabel">Income: ৳0 | 0% Spent</span>
+                <span style="font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.8);" id="monthSpentGoalLabel">Total Fund: ৳0 | 0% Spent</span>
                 <div style="display: flex; align-items: center; justify-content: center; margin-top: 5px;">
                     <div style="width: 120px; height: 8px; background-color: rgba(255, 255, 255, 0.2); border-radius: 10px; position: relative; overflow: hidden;">
                         <div id="monthProgressFill" style="position: absolute; top: 0; left: 0; width: 0%; height: 100%; background-color: #fff; border-radius: 10px; transition: width 0.3s, background-color 0.3s;"></div>
@@ -206,8 +204,7 @@
             </div>
         </div>
     </main>
-
-    <div class="fab-container">
+        <div class="fab-container">
         <div class="fab-menu" id="fabMenu">
             <button class="nav-item" id="n-report" onclick="go('report')"><div class="cal-icon"><div class="cal-top">JUL</div><div class="cal-bot">36</div></div></button>
             <button class="nav-item" id="n-tasks" onclick="go('tasks')">📝</button>
@@ -216,7 +213,8 @@
         </div>
         <button class="fab-main" id="fabBtn" onclick="toggleFab()">⊞</button>
     </div>
-        <div class="modal" id="settingsModal">
+
+    <div class="modal" id="settingsModal">
         <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="margin:0;">Settings</h3><span onclick="closeSettings()" style="cursor: pointer; font-size: 30px; padding: 5px; line-height: 1;">&times;</span>
@@ -229,7 +227,7 @@
                 </div>
                 <div style="display: flex; gap: 8px; margin-top: 5px;">
                     <input type="text" id="newCatName" placeholder="New Category Name" style="margin: 0; padding: 12px; font-size: 13px;">
-                    <button onclick="addNewCat()" style="padding: 0 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 13px; font-weight: 600;">Add</button>
+                    <button onclick="addNewCat()" style="padding: 0 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 13px; font- weight: 600;">Add</button>
                 </div>
                 <div id="catListDisplay" class="scroll-box" style="max-height: 120px; margin-top: 10px; border: 1px solid var(--border); border-radius: 12px; padding: 5px;"></div>
             </div>
@@ -412,23 +410,64 @@
     function delHabit(id) { habits = habits.filter(h => h.id !== id); DB.set('habits', habits); render(); }
 
     function render() {
-        let lBal = 0, cInc = 0, cExp = 0, mQ = 0, mC = 0, mD = 0; let autoRep = {}, autoInc = {};
         const curM = new Date().toLocaleString('en-US', { month: 'long' });
+        const curMIdx = months.indexOf(curM);
+        const prevMName = curMIdx === 0 ? "December" : months[curMIdx - 1];
+        
+        let prevInc = 0, prevExp = 0; let autoCfId = null, autoCfAmt = 0, autoCfType = '';
+        data.forEach(i => {
+            if (i.month !== curM) {
+                if (i.type === 'inc' && i.tag !== 'auto_cf') prevInc += i.amt;
+                if (i.type === 'exp' && i.tag !== 'auto_cf') prevExp += i.amt;
+            } else {
+                if (i.tag === 'auto_cf') { autoCfId = i.id; autoCfAmt = i.amt; autoCfType = i.type; }
+            }
+        });
+
+        let prevBal = prevInc - prevExp;
+        if (prevBal !== 0) {
+            let type = prevBal > 0 ? 'inc' : 'exp';
+            let cat = prevBal > 0 ? `পূর্বের জের (${prevMName})` : `পূর্বের ঘাটতি (${prevMName})`;
+            let amt = Math.abs(prevBal);
+
+            if (autoCfId) {
+                const cfTx = data.find(i => i.id === autoCfId);
+                if (cfTx && (cfTx.amt !== amt || cfTx.type !== type || cfTx.cat !== cat)) { 
+                    cfTx.amt = amt; cfTx.type = type; cfTx.cat = cat; DB.set('data', data); 
+                }
+            } else {
+                data.push({ id: Date.now(), type: type, cat: cat, amt: amt, note: 'Auto carried forward', tag: 'auto_cf', qty: 0, img: null, date: new Date().toLocaleDateString('en-US'), month: curM });
+                DB.set('data', data);
+            }
+        } else if (autoCfId) {
+            data = data.filter(i => i.id !== autoCfId);
+            DB.set('data', data);
+        }
+
+        let lBal = 0, cInc = 0, cExp = 0, mQ = 0, mC = 0, mD = 0; let autoRep = {}, autoInc = {};
         let wHtml = '', mHtml = '', rHtml = '', tHtml = '', hHtml = ''; let tP = 0;
 
         data.slice().reverse().forEach(i => {
-            if(i.type === 'inc') { lBal += i.amt; autoInc[i.month] = (autoInc[i.month] || 0) + i.amt; }
-            if(i.type === 'exp') { lBal -= i.amt; autoRep[i.month] = (autoRep[i.month] || 0) + i.amt; }
+            if(i.type === 'inc') { 
+                if (i.tag !== 'auto_cf') lBal += i.amt; 
+        autoInc[i.month] = (autoInc[i.month] || 0) + i.amt; 
+            }
+            if(i.type === 'exp') { 
+                if (i.tag !== 'auto_cf') lBal -= i.amt; 
+                autoRep[i.month] = (autoRep[i.month] || 0) + i.amt; 
+            }
             if(i.tag === 'meal') { mC += i.amt; mQ += i.qty; } if(i.tag === 'deposit') { mD += i.amt; }
             
             if(i.month === curM) {
-                if(i.type === 'inc') cInc += i.amt; if(i.type === 'exp') cExp += i.amt;
+                if(i.type === 'inc') cInc += i.amt; 
+                if(i.type === 'exp') cExp += i.amt;
                 if(i.type !== 'none') {
                     let imgIcon = i.img ? `<span onclick="viewImage('${i.img}')" style="cursor:pointer; font-size:16px;">📸</span>` : '';
-                    wHtml += `<div class="list-item"><div style="display:flex; align-items:center; flex:1; overflow:hidden;"><div class="icon-box">${i.type==='inc'?'💰':(i.tag?'🥘':'💸')}</div><div class="item-meta"><h4 style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${i.cat}</h4><p>${i.date} ${i.note?'• '+i.note:''}</p></div></div><div class="item-amt ${i.type==='inc'?'text-inc':'text-exp'}">${imgIcon} ${i.type==='inc'?'+':'-'}৳${i.amt}<button class="del-btn" onclick="event.stopPropagation(); deleteTx(${i.id})">&times;</button></div></div>`;
+                    let delBtn = i.tag === 'auto_cf' ? '' : `<button class="del-btn" onclick="event.stopPropagation(); deleteTx(${i.id})">&times;</button>`;
+                    wHtml += `<div class="list-item"><div style="display:flex; align-items:center; flex:1; overflow:hidden;"><div class="icon-box">${i.type==='inc'?'💰':(i.tag?'🥘':'💸')}</div><div class="item-meta"><h4 style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${i.cat}</h4><p>${i.date} ${i.note?'• '+i.note:''}</p></div></div><div class="item-amt ${i.type==='inc'?'text-inc':'text-exp'}">${imgIcon} ${i.type==='inc'?'+':'-'}৳${i.amt}${delBtn}</div></div>`;
                 }
             }
-            if(i.tag) { mHtml += `<div class="list-item"><div style="display:flex; align-items:center;"><div class="icon-box">${i.tag==='meal'?'🍛':'💵'}</div><div class="item-meta"><h4>${i.cat}</h4><p>${i.date}</p></div></div><div class="item-amt" style="color:${i.tag==='meal'?'var(--danger)':'var(--success)'}">৳${i.amt}</div></div>`; }
+            if(i.tag && i.tag !== 'auto_cf') { mHtml += `<div class="list-item"><div style="display:flex; align-items:center;"><div class="icon-box">${i.tag==='meal'?'🍛':'💵'}</div><div class="item-meta"><h4>${i.cat}</h4><p>${i.date}</p></div></div><div class="item-amt" style="color:${i.tag==='meal'?'var(--danger)':'var(--success)'}">৳${i.amt}</div></div>`; }
         });
 
         tasks.forEach(t => { if(!t.done) tP++; tHtml += `<div class="list-item"><div style="display:flex; align-items:center; flex:1; cursor:pointer;" onclick="toggleTask(${t.id})"><div class="chk-circle ${t.done?'done':''}">${t.done?'✓':''}</div><span style="font-size:14px; font-weight:600; ${t.done?'text-decoration:line-through; opacity:0.5;':''}">${t.text}</span></div><button class="del-btn" onclick="event.stopPropagation(); delTask(${t.id})">&times;</button></div>`; });
@@ -450,7 +489,7 @@
         safeHTML('mStatus', (mD - mC) < 0 ? `<span style="color:#FCA5A5">Due: ৳${Math.abs(mD - mC)}</span>` : `<span style="color:#6EE7B7">Surplus: ৳${mD - mC}</span>`);
         
         let pct = cInc > 0 ? Math.min(100, (cExp / cInc) * 100).toFixed(0) : (cExp > 0 ? 100 : 0);
-        safeText('monthSpentGoalLabel', `Income: ৳${cInc.toLocaleString()} | ${pct}% Spent`);
+        safeText('monthSpentGoalLabel', `Total Fund: ৳${cInc.toLocaleString()} | ${pct}% Spent`);
         const pf = document.getElementById('monthProgressFill');
         if(pf) { pf.style.width = pct + '%'; pf.style.backgroundColor = pct >= 80 ? 'var(--danger)' : '#fff'; pf.style.boxShadow = pct >= 80 ? '0 0 10px var(--danger)' : 'none'; }
     }
@@ -491,22 +530,40 @@
         let month = monthTitle || new Date().toLocaleString('en-US', { month: 'long' });
         safeText('chartTitle', month + ' Chart');
         let html = '', brk = {}, total = 0, colors = ['#F1A340', '#ED6C2B', '#EA514B', '#149F7D', '#4F46E5', '#10B981'];
-        data.forEach(i => { if(i.type === 'exp' && i.month === month) { brk[i.cat] = (brk[i.cat] || 0) + i.amt; total += i.amt; } }); 
+        data.forEach(i => { if(i.type === 'exp' && i.month === month && i.tag !== 'auto_cf') { brk[i.cat] = (brk[i.cat] || 0) + i.amt; total += i.amt; } }); 
         
-        let idx = 0, conicStr = '', startA = 0;
+        let idx = 0, cumPct = 0, paths = '', texts = '';
         for(let c in brk) { 
-            let pct = (brk[c]/total) * 100; let endA = startA + pct;
-            conicStr += `${colors[idx%colors.length]} ${startA}% ${endA}%, `; startA = endA;
-            html += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);"><div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:50%; background:${colors[idx%colors.length]};"></span><span style="font-size:13px; font-weight:600;">${c}</span></div><span style="font-weight:700; font-size:13px;">৳${brk[c].toLocaleString()}</span></div>`; 
-            idx++;
+            let pct = brk[c] / total; let color = colors[idx % colors.length];
+            html += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);"><div style="display:flex; align-items:center; gap:8px;"><span style="width:12px; height:12px; border-radius:50%; background:${color};"></span><span style="font-size:13px; font-weight:600;">${c}</span></div><span style="font-weight:700; font-size:13px;">৳${brk[c].toLocaleString()}</span></div>`; 
+            
+            if(pct > 0.999) {
+                paths += `<circle cx="50" cy="50" r="50" fill="${color}"/>`;
+                texts += `<text x="50" y="50" fill="#fff" font-size="8" font-family="sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="middle" transform="rotate(90, 50, 50)">${c.length > 10 ? c.substring(0,8)+'..' : c}</text>`;
+            } else {
+                let startAngle = cumPct * Math.PI * 2; let endAngle = (cumPct + pct) * Math.PI * 2;
+                let x1 = 50 + 50 * Math.cos(startAngle); let y1 = 50 + 50 * Math.sin(startAngle);
+                let x2 = 50 + 50 * Math.cos(endAngle); let y2 = 50 + 50 * Math.sin(endAngle);
+                let largeArc = pct > 0.5 ? 1 : 0;
+                paths += `<path d="M50,50 L${x1},${y1} A50,50 0 ${largeArc},1 ${x2},${y2} Z" fill="${color}"/>`;
+                
+                if(pct > 0.08) {
+                    let midAngle = startAngle + (pct * Math.PI);
+                    let tx = 50 + 32 * Math.cos(midAngle); let ty = 50 + 32 * Math.sin(midAngle);
+                    texts += `<text x="${tx}" y="${ty}" fill="#fff" font-size="6" font-family="sans-serif" font-weight="bold" text-anchor="middle" dominant-baseline="middle" transform="rotate(90, ${tx}, ${ty})">${c.length > 9 ? c.substring(0,7)+'..' : c}</text>`;
+                }
+            }
+            cumPct += pct; idx++;
         } 
         
-        const pie = document.getElementById('dynamicPieChart');
+        const pieContainer = document.getElementById('dynamicPieChart');
         if(total > 0) {
-            pie.style.background = `conic-gradient(${conicStr.slice(0, -2)})`;
+            pieContainer.innerHTML = `<svg viewBox="0 0 100 100" style="width:100%; height:100%; transform: rotate(-90deg); border-radius:50%;">${paths}${texts}</svg>`;
+            pieContainer.style.background = 'transparent';
             safeHTML('chartBreakdownList', html);
         } else {
-            pie.style.background = 'var(--border)';
+            pieContainer.innerHTML = '';
+            pieContainer.style.background = 'var(--border)';
             safeHTML('chartBreakdownList', `<div style="text-align:center; padding:10px; color:var(--text-muted); font-size:12px;">No expenses in ${month}.</div>`);
         }
     }
